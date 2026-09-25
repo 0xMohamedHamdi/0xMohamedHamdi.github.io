@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cyber Threat Intelligence Hub</title>
+<style>
+:root{
+  --bg:#0b0f14; --panel:#121820; --panel2:#161e29; --border:#22303f;
+  --text:#e6edf3; --muted:#8ba0b3; --accent:#3ddc97; --accent2:#5eb3ff;
+  --new:#ff9f43; --radius:10px;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){ --bg:#f5f7f9; --panel:#fff; --panel2:#f0f3f6; --border:#dbe3ea; --text:#16202a; --muted:#5c7085; }
+}
+:root[data-theme="light"]{ --bg:#f5f7f9; --panel:#fff; --panel2:#f0f3f6; --border:#dbe3ea; --text:#16202a; --muted:#5c7085; }
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--border);padding:14px 18px calc(14px + env(safe-area-inset-top,0px));padding-top:calc(14px + env(safe-area-inset-top,0px));}
+header h1{margin:0 0 4px;font-size:1.3rem;}
+header p{margin:0;color:var(--muted);font-size:.85rem;}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 18px;background:var(--panel2);border-bottom:1px solid var(--border);}
+.tab{flex:0 0 auto;padding:7px 13px;border-radius:20px;font-size:.82rem;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;}
+.tab.active{background:var(--accent);color:#04140c;border-color:var(--accent);font-weight:600;}
+main{max-width:920px;margin:0 auto;padding:18px;}
+.banner{background:linear-gradient(90deg,#1c2b22,#12202b);border:1px solid var(--accent);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:.9rem;display:none;}
+.banner.show{display:block;}
+.section-desc{color:var(--muted);font-size:.88rem;margin:0 0 14px;}
+.grid{display:grid;gap:12px;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;position:relative;}
+.card h3{margin:0 0 4px;font-size:1rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.card a.url{color:var(--accent2);text-decoration:none;font-size:.82rem;word-break:break-all;}
+.card a.url:hover{text-decoration:underline;}
+.card p{margin:8px 0;font-size:.88rem;line-height:1.45;color:var(--text);}
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-top:6px;}
+.meta a{color:var(--muted);}
+.badge-new{background:var(--new);color:#2b1400;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.3px;}
+.routine{background:var(--panel2);border:1px dashed var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;font-size:.88rem;}
+.routine ol{margin:8px 0 0;padding-left:20px;}
+.routine li{margin-bottom:6px;}
+.add-box{margin-top:18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--panel2);}
+.add-box summary{cursor:pointer;padding:12px 16px;font-size:.88rem;color:var(--accent2);}
+.add-form{padding:0 16px 16px;display:grid;gap:8px;}
+.add-form input,.add-form textarea{width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.85rem;font-family:inherit;}
+.add-form button{justify-self:start;padding:8px 16px;border-radius:6px;border:none;background:var(--accent);color:#04140c;font-weight:600;cursor:pointer;font-size:.85rem;}
+.add-form .status{font-size:.8rem;color:var(--muted);}
+.hidden{display:none;}
+footer{text-align:center;color:var(--muted);font-size:.75rem;padding:24px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛡️ Cyber Threat Intelligence Hub</h1>
+  <p>A living map of the sources, tools and communities that keep you ahead of the threat landscape.</p>
+</header>
+<div class="tabs" id="tabs"></div>
+<main>
+  <div class="banner" id="newBanner"></div>
+  <div class="routine">
+    <strong>🚀 The 15-Minute Daily Scan</strong>
+    <ol>
+      <li><strong>Feeds (5 min):</strong> The Hacker News + BleepingComputer for major breaches.</li>
+      <li><strong>X/Twitter (5 min):</strong> Check the radar accounts for fresh 0-day PoCs.</li>
+      <li><strong>Tool check (5 min):</strong> Sploitus / GitHub Trending for new exploitation tools.</li>
+      <li><strong>Weekends:</strong> CTFtime or the ProjectDiscovery Discord to test skills live.</li>
+    </ol>
+    <p style="margin:8px 0 0;color:var(--muted);">Tip: an RSS aggregator (e.g. Feedly) pointed at the feed-based sources above turns this into one scrollable page instead of 20 separate site visits.</p>
+  </div>
+  <div id="content"></div>
+</main>
+<footer>Add a resource from any section — it appears here for everyone automatically.</footer>
+
+<script>
+const CATEGORIES = [
+  { id:"threat-intel", title:"1. Threat Intelligence, Solutions & Vulnerability Trackers",
+    desc:"Track zero-days, ransomware activity, vendor bugs and deep security research.",
+    resources:[
+      {name:"Zero Day Initiative (Trend Micro)",url:"https://www.zerodayinitiative.com",desc:"One of the largest vendor-agnostic bug bounty programs; publishes advisories on enterprise-software zero-days often before or right as patches ship.",community:"Trend Micro global research community"},
+      {name:"The Hacker News",url:"https://thehackernews.com",desc:"Broad-spectrum infosec news portal — the fastest way to keep up with major breaches and critical-infrastructure bugs worldwide.",community:"Newsletter / RSS feed"},
+      {name:"BleepingComputer",url:"https://www.bleepingcomputer.com",desc:"Breaking InfoSec news with strong technical breakdowns of newly discovered bugs and active campaigns.",community:"BleepingComputer Forums"},
+      {name:"BleepingComputer — Ransomware",url:"https://www.bleepingcomputer.com/tag/ransomware/",desc:"Dedicated ransomware tracker covering variants, initial-access vectors, and corporate/government data breaches.",community:"Included in the main forum"},
+      {name:"Google Project Zero",url:"https://googleprojectzero.blogspot.com",desc:"Google's elite research team publishing deep analysis of complex zero-days in modern OSes and browser engines.",community:"Public bug tracker (no official Discord)"},
+      {name:"National Vulnerability Database (NVD)",url:"https://nvd.nist.gov",desc:"The definitive global CVE database — look up any product to get technical severity scores and official mitigations.",community:"NVD RSS feeds / contact"},
+      {name:"AttackerKB",url:"https://attackerkb.com",desc:"Community-driven platform where pentesters rate freshly disclosed CVEs by real-world exploitability.",community:"Rapid7 Discord"}
+    ]},
+  { id:"tools", title:"2. Open-Source Tools & Automated Exploitation Repos",
+    desc:"Look up code, exploitation scripts, automated scanners and novel pentesting utilities.",
+    resources:[
+      {name:"GitHub — Cyber Security topic",url:"https://github.com/topics/cyber-security",desc:"Curated global list of repos covering source-code analysis, security auditing tools and educational frameworks.",community:"GitHub Discussions / Issues"},
+      {name:"GitHub — Cybersecurity Tools topic",url:"https://github.com/topics/cybersecurity-tools",desc:"Direct hub for active pentesting, scanning and offensive-security automation scripts.",community:"GitHub Discussions / Issues"},
+      {name:"KitPloit",url:"https://www.kitploit.com",desc:"Knowledge base that aggregates newly released hacking tools and explains how to configure and deploy them.",community:"KitPloit feed"},
+      {name:"ProjectDiscovery",url:"https://github.com/projectdiscovery",desc:"Makers of Nuclei, Subfinder and Naabu — the go-to toolkit for rapid web bug-hunting and infrastructure scanning.",community:"ProjectDiscovery Discord (very active)"},
+      {name:"Sploitus",url:"https://sploitus.com",desc:"Rapid search engine that indexes PoCs and exploit scripts hosted across GitHub and exploit databases.",community:"Main site interface"}
+    ]},
+  { id:"writeups", title:"3. Real-World Bug Bounty, Web Bugs & Write-ups",
+    desc:"Reference exactly how a specific web bug was chained or bypassed in a real assessment.",
+    resources:[
+      {name:"Pentester Land — Write-ups",url:"https://pentester.land/writeups/",desc:"Massive searchable archive of real bug-bounty write-ups categorized by vulnerability type (XSS, SSRF, IDOR...).",community:"Pentester Land newsletter"},
+      {name:"HackerOne Hacktivity",url:"https://hackerone.com/hacktivity/overview",desc:"Live feed of disclosed vulnerability reports from top bug-bounty programs, including remediation and bounties paid.",community:"HackerOne community Discord"},
+      {name:"PortSwigger Web Security Academy",url:"https://portswigger.net/web-security",desc:"The gold standard for web-application security — explains every standard bug class with free interactive labs.",community:"PortSwigger user forum"},
+      {name:"PayloadsAllTheThings",url:"https://github.com/swisskyrepo/PayloadsAllTheThings",desc:"The definitive cheat-sheet repo for web payloads, injections and bypasses used during active pentests.",community:"GitHub contributors community"}
+    ]},
+  { id:"conferences", title:"4. Advanced Conferences & Global CTF Platforms",
+    desc:"Conference talks, deep architectural breakdowns and competitive frameworks.",
+    resources:[
+      {name:"media.ccc.de (Chaos Computer Club)",url:"https://media.ccc.de",desc:"Massive video archive of high-level hacker conferences covering hardware hacking, crypto-analysis and exploitation.",community:"CCC Mastodon / forums"},
+      {name:"CTFtime",url:"https://ctftime.org",desc:"Central hub for global CTF tracking — find elite events, monitor rankings, and join teams.",community:"CTFtime Discord (#team-recruitment)"},
+      {name:"HackTricks",url:"https://book.hacktricks.xyz",desc:"The largest offensive-security encyclopedia around — cloud, network, privilege-escalation and binary exploitation.",community:"PEASS-ng Discord"}
+    ]},
+  { id:"twitter", title:"5. Critical X (Twitter) Radars to Monitor",
+    desc:"Accounts where cutting-edge bugs surface before mainstream media picks them up.",
+    resources:[
+      {name:"@vxunderground",url:"https://twitter.com/vxunderground",desc:"Largest open repository of malware source, samples and historical payloads — excellent for tracking active APT tactics.",community:"vx-underground website"},
+      {name:"@orange_8361 (Orange Tsai)",url:"https://twitter.com/orange_8361",desc:"Handle of the researcher behind massive architecture breaks (ProxyLogon, etc.) — essential for high-end web flaws.",community:"DEVCORE Research"},
+      {name:"@tijme",url:"https://twitter.com/tijme",desc:"Active bug-bounty researcher sharing methodology tips, automation setups and complex findings.",community:"Bug bounty communities"}
+    ]},
+  { id:"new-tools", title:"6. Brand-New Tools Radar",
+    desc:"Freshly baked and aggregated — what's shaping the current offensive-security meta.",
+    resources:[
+      {name:"BlackHat & DEF CON Arsenal",url:"https://www.blackhat.com/html/arsenal/",desc:"Archive of the world's top hackers showcasing brand-new offensive tools each year.",community:"Tracked via conference tags on X/Discord"},
+      {name:"Toolswatch (NJRE)",url:"https://www.toolswatch.org",desc:"Dedicated entirely to tracking, reviewing and aggregating new security tools and open-source hacking projects.",community:"ToolsWatch on X"},
+      {name:"GitHub Trending",url:"https://github.com/trending",desc:"Filter by language daily — most newly written offensive tools and PoCs trend here within 48 hours of release.",community:"GitHub Discussions"},
+      {name:"r/netsec",url:"https://www.reddit.com/r/netsec/",desc:"Use the Tool/Release flair filters — community peer-reviews brand-new tools with detailed critiques.",community:"r/netsec wiki & chats"},
+      {name:"Awesome-Pentest (GitHub)",url:"https://github.com/enaqx/awesome-pentest",desc:"Massive, rigorously categorized master list of pentesting tools; new tools graduate in once proven.",community:"GitHub contributors"}
+    ]},
+  { id:"podcasts", title:"7. Real-World Hacking Scenarios & Case Studies (Podcasts)",
+    desc:"Learn from breaches, red-team ops and social-engineering campaigns while off-screen.",
+    resources:[
+      {name:"Darknet Diaries",url:"https://darknetdiaries.com",desc:"#1 globally — documentary-style interviews with hackers, red teamers and cybercriminals breaking down real breaches.",community:""},
+      {name:"Risky Business",url:"https://risky.biz",desc:"Industry-standard weekly show with deep dives into active campaigns and zero-day discoveries — built for threat intel.",community:""},
+      {name:"Malicious Life",url:"https://malicious.life",desc:"Narrative case studies of historical and monumental cyberattacks such as Stuxnet.",community:""},
+      {name:"Click Here",url:"https://therecord.media/podcast",desc:"Investigative journalism covering the geopolitical side of hacking, ransomware syndicates and state-sponsored APTs.",community:""},
+      {name:"Hacking Humans",url:"https://thecyberwire.com/podcasts/hacking-humans",desc:"Focused entirely on social engineering and phishing — the human-factor side of pentesting.",community:""},
+      {name:"InfoSec Write-ups (newsletter)",url:"https://weekly.infosecwriteups.com",desc:"Weekly roundup of top write-ups spanning bug bounties, CTFs and Hack The Box walkthroughs.",community:""},
+      {name:"0xdf hacks stuff",url:"https://0xdf.gitlab.io",desc:"CTF solutions, malware analysis and home-lab build-outs from a prolific HTB write-up author.",community:""}
+    ]}
+];
+
+const els = { tabs: document.getElementById('tabs'), content: document.getElementById('content'), banner: document.getElementById('newBanner') };
+let ADDED = {}; // categoryId -> [ {name,url,desc,community,createdAt} ]
+let active = CATEGORIES[0].id;
+const lastVisit = Number(localStorage.getItem('ctihub_lastVisit') || 0);
+let newCount = 0;
+
+function esc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderTabs(){
+  els.tabs.innerHTML = CATEGORIES.map(c =>
+    `<button class="tab${c.id===active?' active':''}" data-id="${c.id}">${esc(c.title.replace(/^\d+\.\s*/,''))}</button>`
+  ).join('');
+  els.tabs.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.id;renderTabs();renderContent();}));
+}
+
+function cardHtml(r, catId){
+  const isNew = r.createdAt && r.createdAt > lastVisit;
+  return `<div class="card">
+    <h3>${esc(r.name)} ${isNew?'<span class="badge-new">NEW</span>':''}</h3>
+    <a class="url" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>
+    <p>${esc(r.desc)}</p>
+    ${r.community?`<div class="meta"><span>💬 ${esc(r.community)}</span></div>`:''}
+  </div>`;
+}
+
+function renderContent(){
+  const cat = CATEGORIES.find(c=>c.id===active);
+  const extra = ADDED[cat.id] || [];
+  els.content.innerHTML = `
+    <h2 style="margin:0 0 4px;font-size:1.1rem;">${esc(cat.title)}</h2>
+    <p class="section-desc">${esc(cat.desc)}</p>
+    <div class="grid">${cat.resources.map(r=>cardHtml(r,cat.id)).join('')}${extra.map(r=>cardHtml(r,cat.id)).join('')}</div>
+    <details class="add-box">
+      <summary>➕ Add a resource to this section</summary>
+      <form class="add-form" id="addForm">
+        <input required name="name" placeholder="Resource / platform name">
+        <input required name="url" type="url" placeholder="https://...">
+        <textarea required name="desc" rows="2" placeholder="What does it do?"></textarea>
+        <input name="community" placeholder="Community / Discord link (optional)">
+        <button type="submit">Add resource</button>
+        <span class="status" id="addStatus"></span>
+      </form>
+    </details>`;
+  const form = document.getElementById('addForm');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const status = document.getElementById('addStatus');
+    const fd = new FormData(form);
+    const doc = { name: fd.get('name').trim(), url: fd.get('url').trim(), desc: fd.get('desc').trim(), community: fd.get('community').trim(), createdAt: Date.now() };
+    if(!db){ status.textContent = 'Live sync unavailable in this view — resource not saved.'; return; }
+    status.textContent = 'Saving...';
+    try{
+      await db.collection('added_resources/'+cat.id+'/items').add(doc);
+      if(!ADDED[cat.id]) ADDED[cat.id]=[];
+      ADDED[cat.id].push(doc);
+      form.reset();
+      status.textContent = 'Added! Visible to everyone now.';
+      renderContent();
+    }catch(err){
+      status.textContent = 'Could not save (are you signed in with edit access?).';
+    }
+  });
+}
+
+function renderBanner(){
+  if(newCount>0){
+    els.banner.textContent = `🔔 ${newCount} new resource${newCount>1?'s':''} added since your last visit.`;
+    els.banner.classList.add('show');
+  }
+}
+
+let db = null;
+async function init(){
+  renderTabs();
+  renderContent();
+  try{
+    db = await window.claude.use('db');
+  }catch(e){ db = null; }
+  if(db){
+    for(const cat of CATEGORIES){
+      try{
+        const snap = await db.collection('added_resources/'+cat.id+'/items').orderBy('createdAt','desc').limit(100).get();
+        const items = snap.docs.map(d=>d.data());
+        ADDED[cat.id] = items;
+        newCount += items.filter(i=>i.createdAt>lastVisit).length;
+      }catch(e){ /* ignore missing collection */ }
+    }
+    renderContent();
+    renderBanner();
+  }
+  localStorage.setItem('ctihub_lastVisit', String(Date.now()));
+}
+init();
+</script>
+</body>
+</html>
